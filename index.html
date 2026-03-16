@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>果冻方块：移动端完美适配</title>
+    <title>果冻方块：移动端左右并排版</title>
     <style>
-        /* 1. 终极锁屏：防止手机端任何形式的页面滑动和回弹 */
+        /* 终极锁屏：防止手机端任何形式的页面滑动和回弹 */
         html, body { 
             background: #e0d7c0; color: #555; font-family: 'Segoe UI', sans-serif; 
-            width: 100vw; height: 100vh; /* 严格等于视口尺寸 */
-            margin: 0; padding: 0;
-            overflow: hidden; 
-            position: fixed; /* 钉死页面，防止 Safari 地址栏挤压变形 */
-            touch-action: none; /* 彻底禁用浏览器自带手势 */
+            width: 100vw; height: 100vh; margin: 0; padding: 0;
+            overflow: hidden; position: fixed; touch-action: none; 
             display: flex; justify-content: center; align-items: center;
         }
         
@@ -28,6 +25,7 @@
         
         canvas { display: block; background: #FAF3E0; border-radius: 4px; }
         
+        /* 默认电脑端右侧边栏样式 */
         #side-panel { 
             width: 220px; height: 416px; box-sizing: border-box;
             padding: 20px; background: #fff; border-radius: 12px; 
@@ -59,48 +57,52 @@
         button { padding: 10px 20px; cursor: pointer; background: #FFB7B2; color: #fff; border: none; border-radius: 20px; font-weight: bold; }
 
         /* =========================================
-           2. 移动端专属响应式排版 (核心黑科技) 
+           移动端专属：极窄并排响应式排版
            ========================================= */
         @media (max-width: 600px) {
             body { 
-                align-items: flex-start; /* 整体向上对齐 */
+                align-items: flex-start; 
                 padding-top: 5vh; /* 距离顶部留出一点呼吸空间 */
             }
             #game-wrapper { 
-                flex-direction: column; /* 改为上下堆叠排列 */
-                align-items: center; 
-                gap: 15px; 
-                /* 放大 1.2 倍，让方块在手机上更大更清晰 */
-                transform: scale(1.2); 
+                flex-direction: row; /* 强制保持左右并排 */
+                gap: 10px; 
+                /* 核心黑科技：以 380px 为基准，根据屏幕宽度动态等比缩放整体布局 */
+                transform: scale(calc(100vw / 380)); 
                 transform-origin: top center;
             }
+            #game-container { 
+                border-width: 6px; /* 边框稍微变细一点节省空间 */
+            }
+            
+            /* 1. 极限压缩右侧面板宽度 */
             #side-panel { 
-                width: 240px; /* 和游戏主画布严格等宽 */
-                height: 180px; /* 极度压缩高度，给上方游戏留出空间 */
-                padding: 15px; 
+                width: 110px;  /* 从 220px 砍半 */
+                height: 412px; /* 保持与左侧游戏区完全等高 */
+                padding: 10px; 
             }
-            .stats-top {
-                display: flex;
-                justify-content: flex-start;
-                gap: 20px;
-                margin-bottom: 5px;
+            
+            /* 2. 缩小文字和预览方块 */
+            .stats-top { margin-bottom: 5px; }
+            .stat-item { font-size: 11px; margin-bottom: 4px; }
+            .stat-item b { font-size: 13px; }
+            
+            .preview-area { margin: 5px 0; }
+            .preview-area p { font-size: 10px; margin-bottom: 2px; }
+            #next-piece { width: 60px !important; height: 60px !important; } /* 缩小预览区 */
+            
+            /* 3. 勋章墙布局从“左右”改为“上下”堆叠 */
+            .medal-section { padding-top: 5px; }
+            .medal-section p { font-size: 11px !important; margin-bottom: 5px !important; }
+            .medal-item { margin-bottom: 10px; }
+            .medal-header { 
+                flex-direction: column; /* 图标在上，文字在下 */
+                align-items: center; 
+                gap: 2px; 
             }
-            .preview-area { 
-                /* 把预览框像便利贴一样贴在右上角 */
-                position: absolute; 
-                right: 15px; 
-                top: 15px; 
-                margin: 0;
-                transform: scale(0.7); /* 缩小预览框 */
-                transform-origin: top right;
-            }
-            .preview-area p { display: none; } /* 隐藏“下一个”这几个字节省空间 */
-            .medal-section { 
-                border-top: none; /* 移除分割线，让布局更紧凑 */
-                padding-top: 5px; 
-            }
-            .medal-item { margin-bottom: 8px; }
-            .medal-header { margin-bottom: 2px; }
+            .medal-icon { width: 26px; height: 26px; font-size: 14px; }
+            .medal-name { font-size: 10px; text-align: center; }
+            .progress-bg { height: 4px; }
         }
     </style>
 </head>
@@ -112,11 +114,11 @@
     <div id="game-wrapper">
         <div id="game-container">
             <canvas id="tetris" width="240" height="400"></canvas>
-            <div id="pause-modal" class="modal"><h2>暂停</h2><p>点击屏幕继续</p></div>
+            <div id="pause-modal" class="modal"><h2 style="font-size:24px;">暂停</h2><p style="font-size:12px;">点击继续</p></div>
             <div id="game-over-modal" class="modal">
-                <h2>游戏结束</h2>
-                <p>最终得分: <b id="final-score">0</b></p>
-                <button onclick="restartGame()">再来一局</button>
+                <h2 style="font-size:24px;">结束</h2>
+                <p style="font-size:12px;">得分: <b id="final-score">0</b></p>
+                <button onclick="restartGame()">再来</button>
             </div>
         </div>
 
@@ -127,11 +129,12 @@
             </div>
             
             <div class="preview-area">
-                <p style="font-size: 12px; color: #888; margin-bottom: 5px;">下一个</p>
-                <canvas id="next-piece" width="80" height="80" style="border: 1px solid #eee; border-radius: 5px;"></canvas>
+                <p style="color: #888;">下一个</p>
+                <canvas id="next-piece" width="80" height="80" style="border: 1px solid #eee; border-radius: 5px; margin: 0 auto; display: block;"></canvas>
             </div>
 
             <div class="medal-section">
+                <p style="color: #888; text-align: center;">勋章墙</p>
                 <div id="medal-container">
                     </div>
             </div>
