@@ -1,6 +1,23 @@
 const canvas = document.getElementById('tetris');
 const ctx = canvas.getContext('2d');
-ctx.scale(20, 20);
+
+// --- 【核心修复】获取设备像素比，进行高清屏适配 ---
+const dpr = window.devicePixelRatio || 1;
+
+// 1. 主画布高清化
+canvas.width = 240 * dpr;         // 实际渲染像素放大
+canvas.height = 400 * dpr;
+canvas.style.width = '240px';     // 屏幕显示尺寸保持不变
+canvas.style.height = '400px';
+ctx.scale(dpr * 20, dpr * 20);    // 坐标系同步放大
+
+// 2. 预览画布高清化
+const nextCanvas = document.getElementById('next-piece');
+nextCanvas.width = 80 * dpr;
+nextCanvas.height = 80 * dpr;
+nextCanvas.style.width = '80px';
+nextCanvas.style.height = '80px';
+
 
 // --- 游戏状态 ---
 let score = 0, totalLines = 0, hardDrops = 0, rises = 0, startTime = Date.now();
@@ -43,7 +60,7 @@ class Particle {
 
 // --- 触控手势逻辑核心 ---
 let touchStartX = 0, touchStartY = 0, lastMoveX = 0, lastMoveY = 0;
-const MOVE_SENSITIVITY = 25; // 每滑动25像素移动一格
+const MOVE_SENSITIVITY = 25; 
 
 canvas.addEventListener('touchstart', e => {
     if (isGameOver) return;
@@ -58,13 +75,11 @@ canvas.addEventListener('touchmove', e => {
     const curX = e.touches[0].clientX, curY = e.touches[0].clientY;
     const dx = curX - lastMoveX, dy = curY - lastMoveY;
 
-    // 左右滑动位移
     if (Math.abs(dx) > MOVE_SENSITIVITY) {
         if (dx > 0) { player.pos.x++; if (collide(arena, player)) player.pos.x--; }
         else { player.pos.x--; if (collide(arena, player)) player.pos.x++; }
         lastMoveX = curX; draw();
     }
-    // 向下滑动加速
     if (dy > MOVE_SENSITIVITY) { playerDrop(); lastMoveY = curY; }
     e.preventDefault();
 }, { passive: false });
@@ -74,8 +89,8 @@ canvas.addEventListener('touchend', e => {
     const endX = e.changedTouches[0].clientX, endY = e.changedTouches[0].clientY;
     const distY = endY - touchStartY, distX = Math.abs(endX - touchStartX);
 
-    if (distX < 10 && Math.abs(distY) < 10) { playerRotate(1); draw(); } // 点击旋转
-    else if (distY > 150) hardDrop(); // 快速大幅下滑触发硬降
+    if (distX < 10 && Math.abs(distY) < 10) { playerRotate(1); draw(); } 
+    else if (distY > 150) hardDrop(); 
     e.preventDefault();
 }, { passive: false });
 
@@ -139,7 +154,8 @@ function drawMatrix(matrix, offset, isGhost = false) {
 }
 
 function draw() {
-    ctx.fillStyle = '#FAF3E0'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#FAF3E0'; 
+    ctx.fillRect(0, 0, 12, 20); // 【优化】精准填充逻辑画板尺寸，而不是物理像素尺寸
     drawMatrix(arena, {x:0, y:0});
     drawMatrix(player.matrix, {x:player.pos.x, y:getGhostY()}, true);
     drawMatrix(player.matrix, player.pos);
@@ -197,13 +213,21 @@ function playerReset() {
     nextPiece = createPiece(ts[Math.random()*ts.length|0]); drawNextPiece();
     if(collide(arena, player)) showGameOver();
 }
+
 function drawNextPiece() {
     const nc = document.getElementById('next-piece'), nctx = nc.getContext('2d');
-    nctx.clearRect(0,0,80,80); nctx.save(); nctx.scale(20,20);
+    // 【优化】适配高清缩放后的清除与绘制逻辑
+    nctx.clearRect(0, 0, nc.width, nc.height); 
+    nctx.save(); 
+    nctx.scale(dpr * 20, dpr * 20); // 将 DPR 乘入缩放比例
+    
     const off = {x:(4-nextPiece[0].length)/2, y:(4-nextPiece.length)/2};
-    nextPiece.forEach((row, y) => row.forEach((v, x) => { if(v!==0){ nctx.fillStyle = springColors[v]; nctx.fillRect(x+off.x, y+off.y, 1, 1); } }));
+    nextPiece.forEach((row, y) => row.forEach((v, x) => { 
+        if(v!==0){ nctx.fillStyle = springColors[v]; nctx.fillRect(x+off.x, y+off.y, 1, 1); } 
+    }));
     nctx.restore();
 }
+
 function rotate(m, d) {
     for(let y=0; y<m.length; ++y) for(let x=0; x<y; ++x) [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
     if(d>0) m.forEach(r => r.reverse()); else m.reverse();
@@ -225,7 +249,7 @@ function restartGame() { arena.forEach(r => r.fill(0)); score = 0; startTime = D
 // --- 主循环 ---
 setInterval(() => { if(!isGameOver && !isPaused) document.getElementById('time').innerText = Math.floor((Date.now()-startTime)/1000); }, 1000);
 setInterval(riseArena, 30000);
-setInterval(() => { if(!isGameOver && !isPaused) { player.pos.y++; if(collide(arena, player)) { player.pos.y--; merge(arena, player); arenaSweep(); playerReset(); } draw(); } }, 1000);
+setInterval(() => { if(!isGameOver && !isPaused) { player.pos.y++; if(collide(arena, player)){ player.pos.y--; merge(arena, player); arenaSweep(); playerReset(); } draw(); } }, 1000);
 
 // 键盘兼容
 document.addEventListener('keydown', e => {
@@ -234,9 +258,8 @@ document.addEventListener('keydown', e => {
     if(e.key === ' ') hardDrop();
     else if(e.key === 'ArrowLeft') { player.pos.x--; if(collide(arena, player)) player.pos.x++; }
     else if(e.key === 'ArrowRight') { player.pos.x++; if(collide(arena, player)) player.pos.x--; }
-    else if(e.key === 'ArrowDown') playerDrop();
+    else if(e.key === 'ArrowDown') { player.pos.y++; if(collide(arena, player)) { player.pos.y--; merge(arena, player); arenaSweep(); playerReset(); } }
     else if(e.key === 'ArrowUp') playerRotate(1);
-    draw();
 });
 
 initMedals(); playerReset(); draw();
