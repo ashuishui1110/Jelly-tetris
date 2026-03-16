@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>果冻方块：移动端左右并排版</title>
     <style>
-        /* 终极锁屏：防止手机端任何形式的页面滑动和回弹 */
         html, body { 
             background: #e0d7c0; color: #555; font-family: 'Segoe UI', sans-serif; 
             width: 100vw; height: 100vh; margin: 0; padding: 0;
@@ -25,7 +24,6 @@
         
         canvas { display: block; background: #FAF3E0; border-radius: 4px; }
         
-        /* 默认电脑端右侧边栏样式 */
         #side-panel { 
             width: 220px; height: 416px; box-sizing: border-box;
             padding: 20px; background: #fff; border-radius: 12px; 
@@ -57,52 +55,62 @@
         button { padding: 10px 20px; cursor: pointer; background: #FFB7B2; color: #fff; border: none; border-radius: 20px; font-weight: bold; }
 
         /* =========================================
-           移动端专属：极窄并排响应式排版
+           新增：底部操作说明区域样式
+           ========================================= */
+        #instructions {
+            position: absolute;
+            bottom: 2vh; /* 距离底部2%的屏幕高度 */
+            width: 100%;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            font-weight: 500;
+            pointer-events: none; /* 防止误触挡住滑动 */
+            opacity: 0.8;
+            letter-spacing: 0.5px;
+        }
+        
+        /* 默认显示电脑版说明，隐藏手机版说明 */
+        .inst-mobile { display: none; }
+        .inst-desktop { display: inline-block; }
+
+        /* =========================================
+           移动端专属适配
            ========================================= */
         @media (max-width: 600px) {
-            body { 
-                align-items: flex-start; 
-                padding-top: 5vh; /* 距离顶部留出一点呼吸空间 */
-            }
+            body { align-items: flex-start; padding-top: 5vh; }
             #game-wrapper { 
-                flex-direction: row; /* 强制保持左右并排 */
-                gap: 10px; 
-                /* 核心黑科技：以 380px 为基准，根据屏幕宽度动态等比缩放整体布局 */
+                flex-direction: row; gap: 10px; 
                 transform: scale(calc(100vw / 380)); 
                 transform-origin: top center;
             }
-            #game-container { 
-                border-width: 6px; /* 边框稍微变细一点节省空间 */
-            }
+            #game-container { border-width: 6px; }
+            #side-panel { width: 110px; height: 412px; padding: 10px; }
             
-            /* 1. 极限压缩右侧面板宽度 */
-            #side-panel { 
-                width: 110px;  /* 从 220px 砍半 */
-                height: 412px; /* 保持与左侧游戏区完全等高 */
-                padding: 10px; 
-            }
-            
-            /* 2. 缩小文字和预览方块 */
             .stats-top { margin-bottom: 5px; }
             .stat-item { font-size: 11px; margin-bottom: 4px; }
             .stat-item b { font-size: 13px; }
             
             .preview-area { margin: 5px 0; }
             .preview-area p { font-size: 10px; margin-bottom: 2px; }
-            #next-piece { width: 60px !important; height: 60px !important; } /* 缩小预览区 */
+            #next-piece { width: 60px !important; height: 60px !important; }
             
-            /* 3. 勋章墙布局从“左右”改为“上下”堆叠 */
             .medal-section { padding-top: 5px; }
             .medal-section p { font-size: 11px !important; margin-bottom: 5px !important; }
             .medal-item { margin-bottom: 10px; }
-            .medal-header { 
-                flex-direction: column; /* 图标在上，文字在下 */
-                align-items: center; 
-                gap: 2px; 
-            }
+            .medal-header { flex-direction: column; align-items: center; gap: 2px; }
             .medal-icon { width: 26px; height: 26px; font-size: 14px; }
             .medal-name { font-size: 10px; text-align: center; }
             .progress-bg { height: 4px; }
+
+            /* 在手机上，切换为触屏说明，并调整底部安全距离 */
+            #instructions { 
+                bottom: max(env(safe-area-inset-bottom), 15px); /* 适配全面屏底部的横条 */
+                font-size: 11px; 
+                color: #aaa;
+            }
+            .inst-desktop { display: none; }
+            .inst-mobile { display: inline-block; }
         }
     </style>
 </head>
@@ -139,6 +147,15 @@
                     </div>
             </div>
         </div>
+    </div>
+
+    <div id="instructions">
+        <span class="inst-desktop">
+            ←/→ 左右移动 &nbsp;|&nbsp; ↑ 旋转 &nbsp;|&nbsp; ↓ 软降 &nbsp;|&nbsp; [空格] 硬降 &nbsp;|&nbsp; [P] 暂停
+        </span>
+        <span class="inst-mobile">
+            👈👉 滑动移动 &nbsp;|&nbsp; 👆 点击旋转 &nbsp;|&nbsp; 👇 划动加速 &nbsp;|&nbsp; ⏬ 快速下滑硬降
+        </span>
     </div>
     
     <script src="game.js"></script>
